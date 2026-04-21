@@ -102,11 +102,58 @@ prisma/
 - [x] Admin create shipment with tracking number
 - [x] Checkout with coupon validation
 
+## Phase 3 Features
+
+- [x] Production Docker setup (multi-stage Dockerfile)
+- [x] Docker Compose for production
+- [x] CI/CD pipeline (GitHub Actions)
+- [x] Automated database backup (cron)
+- [x] Health checks (API + PostgreSQL)
+- [x] SEO: Meta tags, Open Graph, JSON-LD structured data
+- [x] XML Sitemap endpoint
+- [x] Privacy Policy & Terms of Service pages
+- [x] Unit tests (auth, payment idempotency, stock calculation)
+
+## Production Deployment
+
+### Using Docker Compose
+
+```bash
+cp .env.example .env
+# Edit .env with production values
+
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Services:
+- **web**: Nginx serving static files (port 80)
+- **api**: Fastify backend (port 3001)
+- **postgres**: PostgreSQL with persistent volume
+- **backup**: Automated daily backups at 02:00 AM
+
+### Environment Variables (Production)
+
+```env
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=strong_password
+POSTGRES_DB=puendoung
+DATABASE_URL=postgresql://user:pass@postgres:5432/puendoung?schema=public
+WEB_ORIGIN=https://yourdomain.com
+SESSION_SECRET=generate_random_32+_chars
+ADMIN_EMAIL=admin@yourdomain.com
+ADMIN_PASSWORD=strong_password
+```
+
 ## Security Notes
 
 - `.env` อยู่ใน `.gitignore`
 - รหัสผ่าน admin ถูก hash ด้วย bcrypt
+- Admin session ใช้ signed JWT token (ไม่ใช่ raw user id)
 - Admin endpoints ต้อง login ก่อน
+- Customer auth ใช้ JWT access token + refresh token
+- Order lookup ต้องใช้ phone/email ยืนยันสำหรับ guest
 - CORS ตั้งค่าจาก env `WEB_ORIGIN`
 - Rate limit ที่ login endpoint
+- Mock payment endpoint ปิดใน production (`NODE_ENV=production`)
+- Payment webhook idempotent (กัน duplicate processing)
 - ไม่เก็บข้อมูลบัตรเครดิตในระบบ (ใช้ mock payment)

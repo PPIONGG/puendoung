@@ -20,6 +20,7 @@ import adminOrderRoutes from "./routes/admin/orders.js";
 import adminStatsRoutes from "./routes/admin/stats.js";
 import couponRoutes from "./routes/coupons.js";
 import timelineRoutes from "./routes/timeline.js";
+import sitemapRoutes from "./routes/sitemap.js";
 import { startExpireReservationJob } from "./jobs/expireReservations.js";
 
 const app = fastify({ logger: true });
@@ -55,6 +56,7 @@ app.register(adminOrderRoutes, { prefix: "/api/admin" });
 app.register(adminStatsRoutes, { prefix: "/api/admin" });
 app.register(couponRoutes, { prefix: "/api" });
 app.register(timelineRoutes, { prefix: "/api" });
+app.register(sitemapRoutes);
 
 app.addHook("onClose", async () => {
   await prisma.$disconnect();

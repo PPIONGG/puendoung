@@ -10,6 +10,8 @@ import OrderTrackPage from "./pages/OrderTrackPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AccountPage from "./pages/AccountPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminLayout from "./components/AdminLayout";
 import AdminProductsPage from "./pages/AdminProductsPage";
@@ -31,6 +33,8 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
         </Route>
         <Route path="/admin/login" element={<AdminLoginPage />} />
         <Route element={<AdminLayout />}>

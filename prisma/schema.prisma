@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(customer)
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customerProfile CustomerProfile?
+  adminActions    AdminAction[]
+  refreshTokens   RefreshToken[]
+}
+
+model CustomerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  phone     String?
+  addresses Address[]
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id                String   @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id])
+  label             String?
+  fullName          String
+  phone             String
+  line1             String
+  line2             String?
+  province          String
+  district          String
+  postalCode        String
+  isDefault         Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  imageUrl    String?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id                 String            @id @default(cuid())
+  slug               String            @unique
+  name               String
+  description        String?
+  price              Int
+  compareAtPrice     Int?
+  sku                String?           @unique
+  stockQuantity      Int               @default(0)
+  categoryId         String?
+  category           Category?         @relation(fields: [categoryId], references: [id])
+  status             ProductStatus     @default(draft)
+  images             ProductImage[]
+  isLiveSpecimen     Boolean           @default(false)
+  speciesName        String?
+  sex                SpecimenSex?
+  lifeStage          LifeStage?
+  careLevel          CareLevel?
+  temperatureRange   String?
+  humidityRange      String?
+  substrateNotes     String?
+  feedingNotes       String?
+  shippingNotes      String?
+  availabilityStatus AvailabilityStatus @default(out_of_stock)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  orderItems         OrderItem[]
+  inventoryMovements InventoryMovement[]
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  lookupToken     String      @unique
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  shippingName    String
+  shippingPhone   String
+  shippingAddress String
+  shippingProvince String
+  shippingDistrict String
+  shippingPostalCode String
+  shippingMethod  String
+  shippingNotes   String?
+  subtotalAmount  Int
+  shippingAmount  Int         @default(0)
+  discountAmount  Int         @default(0)
+  taxAmount       Int         @default(0)
+  totalAmount     Int
+  status          OrderStatus @default(pending_payment)
+  paymentStatus   PaymentStatus @default(unpaid)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  expiredAt       DateTime?
+  customerId      String?
+  customer        CustomerProfile? @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+  payments        Payment[]
+  shipments       Shipment[]
+  timeline        OrderTimeline[]
+  couponId        String?
+  coupon          Coupon?     @relation(fields: [couponId], references: [id])
+}
+
+model OrderItem {
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id])
+  name              String
+  sku               String?
+  unitPrice         Int
+  quantity          Int
+  subtotal          Int
+  isLiveSpecimen    Boolean  @default(false)
+  speciesName       String?
+  sex               SpecimenSex?
+  lifeStage         LifeStage?
+  imageUrl          String?
+  createdAt         DateTime @default(now())
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider      String
+  providerRef   String?
+  amount        Int
+  status        PaymentStatus @default(unpaid)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  events        PaymentEvent[]
+}
+
+model PaymentEvent {
+  id          String   @id @default(cuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  eventType   String
+  payload     Json?
+  providerEventId String?
+  createdAt   DateTime @default(now())
+}
+
+model Shipment {
+  id              String   @id @default(cuid())
+  orderId         String
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  trackingNumber  String?
+  provider        String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model InventoryMovement {
+  id          String              @id @default(cuid())
+  productId   String
+  product     Product             @relation(fields: [productId], references: [id])
+  quantity    Int
+  reason      InventoryReason
+  orderId     String?
+  notes       String?
+  createdAt   DateTime            @default(now())
+}
+
+model AdminAction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model OrderTimeline {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  name        String
+  description String?
+  type        CouponType
+  value       Int
+  minAmount   Int       @default(0)
+  maxDiscount Int?
+  usageLimit  Int?
+  usageCount  Int       @default(0)
+  startsAt    DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orders      Order[]
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  template  String
+  status    String   @default("pending")
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+enum UserRole {
+  customer
+  admin
+}
+
+enum ProductStatus {
+  draft
+  active
+  archived
+}
+
+enum AvailabilityStatus {
+  ready
+  preorder
+  breeding
+  molting
+  out_of_stock
+  unavailable
+}
+
+enum SpecimenSex {
+  male
+  female
+  pair
+  unknown
+  not_applicable
+}
+
+enum LifeStage {
+  egg
+  larva
+  pupa
+  adult
+  not_applicable
+}
+
+enum CareLevel {
+  beginner
+  intermediate
+  advanced
+}
+
+enum OrderStatus {
+  pending_payment
+  paid
+  preparing
+  shipped
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentStatus {
+  unpaid
+  pending
+  paid
+  failed
+  expired
+  refunded
+}
+
+enum InventoryReason {
+  seed
+  sale
+  reserve
+  release
+  manual_adjustment
+  cancel
+}
+
+enum CouponType {
+  fixed_amount
+  percentage
+}
